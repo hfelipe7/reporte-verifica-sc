@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Informe Territorial – San Cristóbal</title>
+<link rel="stylesheet" href="estilos.css">
+</head>
+
+<body>
+
+<!-- ENCABEZADO -->
+<div class="header">
+    <img src="logo.png" alt="logo">
+</div>
+
+<!-- TABLA -->
+<table id="tabla">
+    <thead></thead>
+    <tbody></tbody>
+</table>
+
+<!-- INDICADOR INFERIOR -->
+<div class="center">
+    <div><strong>% Avanzado del Pendiente</strong></div>
+    <div class="battery">
+        <div id="batteryFill" class="battery-fill red" style="width:8%"></div>
+    </div>
+    <div><strong>8.00%</strong></div>
+</div>
+
+<!-- FECHA DEL REPORTE -->
+<div class="report-date">
+    Reporte: 20 de Enero de 2026
+</div>
+
+<!-- SCRIPT -->
+<script>
+fetch('datos.csv')
+.then(response => response.text())
+.then(text => {
+    const rows = text.trim().split('\n').map(r => r.split(','));
+    const headers = rows.shift();
+
+    const thead = document.querySelector('#tabla thead');
+    const tbody = document.querySelector('#tabla tbody');
+
+    /* CABECERAS */
+    let trHead = document.createElement('tr');
+    headers.forEach(h => {
+        let th = document.createElement('th');
+        th.textContent = h;
+        trHead.appendChild(th);
+    });
+    thead.appendChild(trHead);
+
+    /* FILAS */
+    rows.forEach(row => {
+        let tr = document.createElement('tr');
+
+        row.forEach((cell, index) => {
+            let td = document.createElement('td');
+
+            if (headers[index] === 'Territorio') {
+                td.classList.add('text-left');
+            }
+
+            if (headers[index] === 'Porcentaje') {
+                let p = parseFloat(cell);
+                td.innerHTML = `
+                    <div class="progress-cell">
+                        <div class="progress-bar" style="width:${p * 100}%"></div>
+                        <div class="progress-text">${(p * 100).toFixed(2)}%</div>
+                    </div>
+                `;
+            } else {
+                td.textContent = cell;
+            }
+
+            tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+    });
+});
+
+/* BATERÍA – CAMBIO DE COLOR SEGÚN PORCENTAJE */
+const pendienteAvance = 8; // ← cambia este valor cuando actualices
+const battery = document.getElementById('batteryFill');
+
+if (pendienteAvance < 10) {
+    battery.className = 'battery-fill red';
+} else if (pendienteAvance < 20) {
+    battery.className = 'battery-fill yellow';
+} else {
+    battery.className = 'battery-fill green';
+}
+</script>
+
+</body>
+</html>
