@@ -138,4 +138,70 @@ tr.total td.nuevos {
   text-align: center;
 }
 
+/* ====== PROVINCIAS ====== */
+.provincias-section {
+  margin: 60px auto;
+  width: 70%;
+  text-align: center;
+}
+
+.provincias-section h2 {
+  margin-bottom: 20px;
+  color: #0b4f6c;
+}
+
+#tabla-provincias {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#tabla-provincias th {
+  background: #0b4f6c;
+  color: white;
+  padding: 10px;
+}
+
+#tabla-provincias td {
+  padding: 8px;
+  border-bottom: 1px solid #cfdce5;
+}
+
+.barra-provincia {
+  position: relative;
+  background: #fff3cd;
+  height: 18px;
+  border-radius: 6px;
+}
+
+.barra-provincia span {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(to right, #ffe066, #f1c232);
+}
+
+.barra-provincia strong {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+}
+
+/* ===== ANIMACIÓN DE BARRAS ===== */
+.barra-provincia span {
+  width: 0;
+  animation: crecerBarra 1.2s ease-out forwards;
+}
+
+@keyframes crecerBarra {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--ancho);
+  }
+}
+
+
 
