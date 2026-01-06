@@ -39,6 +39,22 @@
   <div class="bateria-valor" id="bateriaValor">0.00%</div>
 </div>
 
+  <section class="provincias-section">
+  <h2>Avance por Provincia</h2>
+
+  <table id="tabla-provincias">
+    <thead>
+      <tr>
+        <th>Provincia</th>
+        <th>Pendiente</th>
+        <th>Verificados</th>
+        <th>% Alcanzado</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</section>
+
 
 <script>
 fetch('datos.csv')
@@ -108,8 +124,39 @@ fetch('datos.csv')
     }
     /* ===== FIN BATERÍA ===== */
 
+    /* ====== TABLA PROVINCIAS ====== */
+fetch('data2.csv')
+  .then(r => r.text())
+  .then(text => {
+    const filas = text.trim().split('\n').slice(1);
+    const tbody = document.querySelector('#tabla-provincias tbody');
+
+    filas.forEach(fila => {
+      const [provincia, pendiente, verificados, porcentaje] = fila.split(',');
+
+      const tr = document.createElement('tr');
+
+      tr.innerHTML = `
+        <td>${provincia}</td>
+        <td>${pendiente}</td>
+        <td>${verificados}</td>
+        <td>
+          <div class="barra-provincia">
+            <span style="--ancho:${parseFloat(porcentaje).toFixed(2)}%"></span>
+            <strong>${parseFloat(porcentaje).toFixed(2)}%</strong>
+          </div>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+  });
+/* ====== FIN PROVINCIAS ====== */
+
   });
 </script>
+
+  
 
 </body>
 </html>
