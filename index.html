@@ -9,7 +9,7 @@
 
 <header>
   <img src="logo.png" alt="Logo institucional">
-  <div class="fecha-reporte">Reporte: 20 de Enero de 2026</div>
+  <div class="fecha-reporte">Reporte: 06 de Enero de 2026</div>
 </header>
 
 <table id="tabla">
@@ -28,6 +28,17 @@
   </thead>
   <tbody></tbody>
 </table>
+
+  <div class="bateria-container">
+  <div class="bateria-label">% Avanzado del Pendiente</div>
+
+  <div class="bateria">
+    <div class="bateria-nivel" id="bateriaNivel"></div>
+  </div>
+
+  <div class="bateria-valor" id="bateriaValor">0.00%</div>
+</div>
+
 
 <script>
 fetch('datos.csv')
@@ -51,11 +62,15 @@ fetch('datos.csv')
 
         if (i === 8) {
           const porcentaje = parseFloat(valor);
+          const esTotal = c[0] === 'TOTAL';
+
           td.innerHTML = `
-            <div class="barra-porcentaje">
-              <span style="width:${porcentaje}%"></span>
-              <strong>${porcentaje.toFixed(2)}%</strong>
-            </div>`;
+            <div class="barra-porcentaje ${esTotal ? 'barra-total' : ''}">
+                <span style="width:${porcentaje.toFixed(2)}%"></span>
+                <strong>${porcentaje.toFixed(2)}%</strong>
+            </div>
+          `;
+
         } else {
           td.textContent = valor;
         }
@@ -65,6 +80,34 @@ fetch('datos.csv')
 
       tbody.appendChild(tr);
     });
+        /* ===== BATERÍA DE AVANCE ===== */
+    const filaTotal = filas.find(f => f.startsWith('TOTAL'));
+
+    if (filaTotal) {
+      const c = filaTotal.split(',');
+
+      const totalPendiente = parseFloat(c[4]);   // columna Pendiente
+      const totalVerificados = parseFloat(c[5]); // columna Verificados
+
+      let porcentajeBateria = (totalVerificados / totalPendiente) * 100;
+      porcentajeBateria = Math.max(0, Math.min(100, porcentajeBateria));
+
+      const nivel = document.getElementById('bateriaNivel');
+      const valor = document.getElementById('bateriaValor');
+
+      nivel.style.width = porcentajeBateria.toFixed(2) + '%';
+      valor.textContent = porcentajeBateria.toFixed(2) + '%';
+
+      if (porcentajeBateria < 10) {
+        nivel.style.background = 'linear-gradient(to right, #ff4d4d, #ff1a1a)';
+      } else if (porcentajeBateria < 20) {
+        nivel.style.background = 'linear-gradient(to right, #ffd966, #f1c232)';
+      } else {
+        nivel.style.background = 'linear-gradient(to right, #6fdc8c, #2eb872)';
+      }
+    }
+    /* ===== FIN BATERÍA ===== */
+
   });
 </script>
 
