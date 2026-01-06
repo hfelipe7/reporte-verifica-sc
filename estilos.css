@@ -64,6 +64,7 @@ tr.total td.nuevos {
   background: #e6f4fb;
   border-radius: 4px;
   overflow: hidden;
+  padding-right: 48px;   /* ← reserva espacio para el texto */
 }
 
 .barra-porcentaje span {
@@ -72,14 +73,69 @@ tr.total td.nuevos {
   top: 0;
   height: 100%;
   background: linear-gradient(90deg, #5bc0eb, #00aaff);
+  border-radius: 4px;
 }
 
 .barra-porcentaje strong {
   position: absolute;
-  width: 100%;
-  text-align: center;
+  right: 8px;            /* separación visual correcta */
+  top: 0;
   line-height: 22px;
   font-size: 12px;
   color: #003b5c;
   font-weight: bold;
+  white-space: nowrap;  /* ← evita que se corte */
 }
+
+/* Barra verde SOLO para el TOTAL */
+.barra-total span {
+  background: linear-gradient(90deg, #3cb371, #2ecc71) !important;
+}
+
+/* =========================
+   BATERÍA DE AVANCE
+========================= */
+
+.bateria-container {
+  margin: 30px auto;
+  text-align: center;
+}
+
+.bateria-label {
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.bateria {
+  width: 260px;
+  height: 28px;
+  border: 2px solid #333;
+  margin: 0 auto;
+  position: relative;
+  background: #ffffff;
+}
+
+.bateria::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 7px;
+  width: 6px;
+  height: 12px;
+  background: #333;
+}
+
+.bateria-nivel {
+  height: 100%;
+  width: 0%;
+  background: red;
+  transition: width 0.5s;
+}
+
+.bateria-valor {
+  margin-top: 6px;
+  font-weight: bold;
+  text-align: center;
+}
+
+
