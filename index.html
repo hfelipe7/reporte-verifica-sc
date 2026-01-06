@@ -39,21 +39,11 @@
   <div class="bateria-valor" id="bateriaValor">0.00%</div>
 </div>
 
-  <section class="provincias-section">
+<section class="provincias-section">
   <h2>Avance por Provincia</h2>
-
-  <table id="tabla-provincias">
-    <thead>
-      <tr>
-        <th>Provincia</th>
-        <th>Pendiente</th>
-        <th>Verificados</th>
-        <th>% Alcanzado</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div id="contenedor-regiones"></div>
 </section>
+
 
 
 <script>
@@ -124,34 +114,71 @@ fetch('datos.csv')
     }
     /* ===== FIN BATERÍA ===== */
 
-    /* ====== TABLA PROVINCIAS ====== */
-fetch('data2.csv')
+   /* ====== AVANCE POR PROVINCIA (AGRUPADO POR REGIÓN) ====== */
+fetch('datos2.csv')
   .then(r => r.text())
   .then(text => {
     const filas = text.trim().split('\n').slice(1);
-    const tbody = document.querySelector('#tabla-provincias tbody');
+    const contenedor = document.getElementById('contenedor-regiones');
+
+    const regiones = {};
 
     filas.forEach(fila => {
-      const [provincia, pendiente, verificados, porcentaje] = fila.split(',');
+      if (!fila.trim()) return;
 
-      const tr = document.createElement('tr');
+      const [region, provincia, pendiente, verificados, porcentajeRaw] = fila.split(',');
+      const porcentaje = parseFloat(porcentajeRaw);
 
-      tr.innerHTML = `
-        <td>${provincia}</td>
-        <td>${pendiente}</td>
-        <td>${verificados}</td>
-        <td>
-          <div class="barra-provincia">
-            <span style="--ancho:${parseFloat(porcentaje).toFixed(2)}%"></span>
-            <strong>${parseFloat(porcentaje).toFixed(2)}%</strong>
-          </div>
-        </td>
+      if (isNaN(porcentaje)) return;
+
+      if (!regiones[region]) regiones[region] = [];
+      regiones[region].push({ provincia, pendiente, verificados, porcentaje });
+    });
+
+    Object.keys(regiones).forEach(region => {
+      const section = document.createElement('div');
+      section.className = 'region-box';
+
+      section.innerHTML = `
+        <h3>${region}</h3>
+        <table class="tabla-region">
+          <thead>
+            <tr>
+              <th>Provincia</th>
+              <th>Pendiente</th>
+              <th>Verificados</th>
+              <th>% Alcanzado</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       `;
 
-      tbody.appendChild(tr);
+      const tbody = section.querySelector('tbody');
+
+      regiones[region].forEach(d => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>${d.provincia}</td>
+          <td>${d.pendiente}</td>
+          <td>${d.verificados}</td>
+          <td>
+            <div class="barra-porcentaje barra-provincia">
+              <span style="width:${d.porcentaje.toFixed(2)}%"></span>
+              <strong>${d.porcentaje.toFixed(2)}%</strong>
+            </div>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      contenedor.appendChild(section);
     });
   });
-/* ====== FIN PROVINCIAS ====== */
+/* ====== FIN AVANCE POR PROVINCIA ====== */
+
 
   });
 </script>
