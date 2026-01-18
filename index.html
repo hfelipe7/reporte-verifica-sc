@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Reporte Verificación San Cristóbal</title>
   <link rel="stylesheet" href="estilos.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -12,6 +13,7 @@
   <div class="fecha-reporte">Reporte: 18 de Enero de 2026</div>
 </header>
 
+<!-- ================= TABLA PRINCIPAL (NO TOCAR) ================= -->
 <table id="tabla">
   <thead>
     <tr>
@@ -29,25 +31,37 @@
   <tbody></tbody>
 </table>
 
-  <div class="bateria-container">
+<div class="bateria-container">
   <div class="bateria-label">% Avanzado del Pendiente</div>
-
   <div class="bateria">
     <div class="bateria-nivel" id="bateriaNivel"></div>
   </div>
-
   <div class="bateria-valor" id="bateriaValor">0.00%</div>
 </div>
 
+<!-- ================= NUEVA SECCIÓN PROVINCIAS ================= -->
 <section class="provincias-section">
-  <h2>Avance por Provincia</h2>
-  <div id="contenedor-regiones"></div>
+  <h2>Avance por Provincia (Comparativo Nacional)</h2>
+
+  <table class="tabla-region unica">
+    <thead>
+      <tr>
+        <th>Región</th>
+        <th>Provincia</th>
+        <th>Pendiente</th>
+        <th>Verificados</th>
+        <th>% Alcanzado</th>
+      </tr>
+    </thead>
+    <tbody id="tabla-provincias"></tbody>
+  </table>
+
+  <canvas id="graficoProvincias" height="120"></canvas>
 </section>
 
-
-
 <script>
-fetch('datos.csv')
+/* ================= CARGA TABLA PRINCIPAL + BATERÍA (NO TOCAR) ================= */
+fetch('datos.csv?v=' + Date.now())
   .then(r => r.text())
   .then(text => {
     const filas = text.trim().split('\n').slice(1);
@@ -56,12 +70,10 @@ fetch('datos.csv')
     filas.forEach(fila => {
       const c = fila.split(',');
       const tr = document.createElement('tr');
-
       if (c[0] === 'TOTAL') tr.classList.add('total');
 
       c.forEach((valor, i) => {
         const td = document.createElement('td');
-
         if (i === 1) td.classList.add('territorio');
         if (i === 5) td.classList.add('verificados');
         if (i === 6) td.classList.add('nuevos');
@@ -69,121 +81,97 @@ fetch('datos.csv')
         if (i === 8) {
           const porcentaje = parseFloat(valor);
           const esTotal = c[0] === 'TOTAL';
-
           td.innerHTML = `
             <div class="barra-porcentaje ${esTotal ? 'barra-total' : ''}">
-                <span style="width:${porcentaje.toFixed(2)}%"></span>
-                <strong>${porcentaje.toFixed(2)}%</strong>
-            </div>
-          `;
-
+              <span style="width:${porcentaje.toFixed(2)}%"></span>
+              <strong>${porcentaje.toFixed(2)}%</strong>
+            </div>`;
         } else {
           td.textContent = valor;
         }
-
         tr.appendChild(td);
       });
-
       tbody.appendChild(tr);
     });
-        /* ===== BATERÍA DE AVANCE ===== */
-    const filaTotal = filas.find(f => f.startsWith('TOTAL'));
 
+    const filaTotal = filas.find(f => f.startsWith('TOTAL'));
     if (filaTotal) {
       const c = filaTotal.split(',');
+      const totalPendiente = parseFloat(c[4]);
+      const totalVerificados = parseFloat(c[5]);
+      let porcentaje = (totalVerificados / totalPendiente) * 100;
+      porcentaje = Math.max(0, Math.min(100, porcentaje));
 
-      const totalPendiente = parseFloat(c[4]);   // columna Pendiente
-      const totalVerificados = parseFloat(c[5]); // columna Verificados
-
-      let porcentajeBateria = (totalVerificados / totalPendiente) * 100;
-      porcentajeBateria = Math.max(0, Math.min(100, porcentajeBateria));
-
-      const nivel = document.getElementById('bateriaNivel');
-      const valor = document.getElementById('bateriaValor');
-
-      nivel.style.width = porcentajeBateria.toFixed(2) + '%';
-      valor.textContent = porcentajeBateria.toFixed(2) + '%';
-
-      if (porcentajeBateria < 10) {
-        nivel.style.background = 'linear-gradient(to right, #ff4d4d, #ff1a1a)';
-      } else if (porcentajeBateria < 20) {
-        nivel.style.background = 'linear-gradient(to right, #ffd966, #f1c232)';
-      } else {
-        nivel.style.background = 'linear-gradient(to right, #6fdc8c, #2eb872)';
-      }
+      document.getElementById('bateriaNivel').style.width = porcentaje.toFixed(2) + '%';
+      document.getElementById('bateriaValor').textContent = porcentaje.toFixed(2) + '%';
     }
-    /* ===== FIN BATERÍA ===== */
+  });
 
-   /* ====== AVANCE POR PROVINCIA (AGRUPADO POR REGIÓN) ====== */
-fetch('datos2.csv')
+/* ================= NUEVA TABLA + GRÁFICO PROVINCIAS ================= */
+fetch('datos2.csv?v=' + Date.now())
   .then(r => r.text())
   .then(text => {
     const filas = text.trim().split('\n').slice(1);
-    const contenedor = document.getElementById('contenedor-regiones');
+    const tbody = document.getElementById('tabla-provincias');
 
-    const regiones = {};
+    const ordenRegiones = [
+      'Ozama','Cibao Norte','Cibao Nordeste','Cibao Sur',
+      'El Valle','Valdesia','Enriquillo','Yuma','Higuamo'
+    ];
 
-    filas.forEach(fila => {
-      if (!fila.trim()) return;
+    const datos = filas.map(f => {
+      const [region, provincia, pendiente, verificados, porcentaje] = f.split(',');
+      return {
+        region,
+        provincia,
+        pendiente: +pendiente,
+        verificados: +verificados,
+        porcentaje: +porcentaje
+      };
+    }).sort((a, b) =>
+      ordenRegiones.indexOf(a.region) - ordenRegiones.indexOf(b.region)
+    );
 
-      const [region, provincia, pendiente, verificados, porcentajeRaw] = fila.split(',');
-      const porcentaje = parseFloat(porcentajeRaw);
-
-      if (isNaN(porcentaje)) return;
-
-      if (!regiones[region]) regiones[region] = [];
-      regiones[region].push({ provincia, pendiente, verificados, porcentaje });
+    datos.forEach(d => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${d.region}</td>
+        <td>${d.provincia}</td>
+        <td>${d.pendiente}</td>
+        <td>${d.verificados}</td>
+        <td>
+          <div class="barra-porcentaje barra-provincia">
+            <span style="width:${Math.min(100,d.porcentaje)}%"></span>
+            <strong>${d.porcentaje.toFixed(2)}%</strong>
+          </div>
+        </td>`;
+      tbody.appendChild(tr);
     });
 
-    Object.keys(regiones).forEach(region => {
-      const section = document.createElement('div');
-      section.className = 'region-box';
+    // ===== GRÁFICO =====
+    const ctx = document.getElementById('graficoProvincias').getContext('2d');
+    const grad = ctx.createLinearGradient(0,0,0,400);
+    grad.addColorStop(0,'#ff4d4d');
+    grad.addColorStop(1,'#ffd966');
 
-      section.innerHTML = `
-        <h3>${region}</h3>
-        <table class="tabla-region">
-          <thead>
-            <tr>
-              <th>Provincia</th>
-              <th>Pendiente</th>
-              <th>Verificados</th>
-              <th>% Alcanzado</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      `;
-
-      const tbody = section.querySelector('tbody');
-
-      regiones[region].forEach(d => {
-        const tr = document.createElement('tr');
-
-        tr.innerHTML = `
-          <td>${d.provincia}</td>
-          <td>${d.pendiente}</td>
-          <td>${d.verificados}</td>
-          <td>
-            <div class="barra-porcentaje barra-provincia">
-              <span style="width:${d.porcentaje.toFixed(2)}%"></span>
-              <strong>${d.porcentaje.toFixed(2)}%</strong>
-            </div>
-          </td>
-        `;
-
-        tbody.appendChild(tr);
-      });
-
-      contenedor.appendChild(section);
+    new Chart(ctx,{
+      type:'bar',
+      data:{
+        labels: datos.map(d=>d.provincia),
+        datasets:[{
+          data: datos.map(d=>d.porcentaje),
+          backgroundColor: grad
+        }]
+      },
+      options:{
+        plugins:{legend:{display:false}},
+        scales:{
+          y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}
+        }
+      }
     });
-  });
-/* ====== FIN AVANCE POR PROVINCIA ====== */
-
-
   });
 </script>
-
-  
 
 </body>
 </html>
